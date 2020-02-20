@@ -8,18 +8,26 @@
     <input type="text" id="url" name="magnet"><br>
     <input type="button" id="bload" value="Load Torrent">
     <input type="button" id="bplay" value="Play Torrent">
+    <input type="button" id="bstop" value="Stop Torrent">
   </form>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script>
 
+    var baseUrl = "192.168.137.14"
+
     $("#bload").click(function(){
-      var url = "http://192.168.0.242:3000/loadMagnet?url=" + encodeURIComponent($("#url")[0].value);
+      var url = "http://" + baseUrl + ":3000" + "/loadMagnet?url=" + encodeURIComponent($("#url")[0].value);
       getReq(url);
     });
 
     $("#bplay").click(function(){
-      var url = "http://192.168.0.242:3000/play";
+      var url = "http://" + baseUrl + ":3000" + "/play";
+      getReq(url);
+    });
+
+    $("#bstop").click(function(){
+      var url = "http://" + baseUrl + ":3000" + "/stop";
       getReq(url);
     });
 

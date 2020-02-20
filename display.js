@@ -15,7 +15,7 @@ exports.init = function(){
         reset();
         process.exit(0);
       } else {
-        console.log('key', key);
+        //console.log('key', key);
       }
     });
 }
@@ -41,7 +41,7 @@ function setSplash(){
   fim = spawn("fim", ["-a","-q","splash.png"]);
 }
 
-exports.play = function(engine){
+exports.play = function(port){
   reset();
-  omx.play("http://localhost:" + engine.server.address().port, ['-o hdmi','--display 2']);
+  omx.play("http://localhost:" + port, ['-o hdmi','--display 2']);
 }

@@ -1,27 +1,49 @@
-var tdisplay = require("./tdisplay.js");
 const express = require('express');
 const app = express();
 var cors = require('cors');
-var readTorrent = require('read-torrent');
-var peerflix = require('peerflix');
+var display = require("./display.js");
 var path = require('path');
 var fs = require('fs');
+const { Worker } = require('worker_threads');
 
+var tor_engine = new Worker("./tor_engine.js");
+
+var waitRes;
+
+tor_engine.on("message", function(msg){
+  //console.log("Parent: ");
+  //console.log(msg);
+  if (msg.action == "start"){
+    if (msg.success){
+      engineSpinning = true;
+      waitRes.send("Torrent loaded and ready to play");
+    }else{
+      engineSpinning = false;
+      waitRes.send("Invalid Torrent");
+      }
+  }else if (msg.action =="stop"){
+    engineSpinning = false;
+    console.log("Engine Reset")
+    waitRes.send("Reset Torrent");
+  }
+});
 
 var tempDir = "./torrents";
-var engine;
+var engineSpinning = false;
 
-const port = 3000
+var remote_port = 3000;
+var tor_port = 8888;
 
-tdisplay.init();
+display.init();
 
 function reset(){
-  if(engine){
-    engine.destroy();
-    engine = null;
-  }
+  console.log("Resetting Player");
+  display.resetPlayer();
+  if(engineSpinning){
+    console.log("Resetting Engine");
 
-  tdisplay.resetPlayer();
+    tor_engine.postMessage({action:"stop"});
+  }
 }
 
 
@@ -29,42 +51,39 @@ app.use(cors());
 app.use(express.static('public'));
 
 app.get('/', function (req, res) {
-  res.sendFile('index.html');
+  return res.sendFile('index.html');
 });
 
 app.get('/loadMagnet', async function (req, res) {
   var magnet = req.query.url;
+  reset();
 
-  await readTorrent(magnet, function(err, torrent) {
-   if (err) return res.send(400, { error: 'torrent link could not be parsed' });
 
-   reset();
+  tor_engine.postMessage({action:"start", data: {magnet:magnet, port: tor_port}});
 
-   engine = peerflix(torrent, {
-      connections: 100,
-      tmp: tempDir,
-      buffer: (1.5 * 1024 * 1024).toString()
-    });
-
-    engine.server.on('listening', function() {
-      console.log("torrent loaded on port " + engine.server.address().port);
-      res.send("Torrent loaded and ready to play");
-    });
-
-  });
-
+  waitRes = res;
 });
 
 app.get('/play', function (req, res) {
 
-  if (engine == null){
-    res.send("There is nothing to play");
+  if (!engineSpinning){
+    return res.send("There is nothing to play");
   }
 
-  tdisplay.play(engine);
+  display.play(tor_port);
 
   res.send("Started playing");
 });
 
+app.get('/stop', function (req, res) {
 
-app.listen(port, () => console.log(`Vbox listening on port ${port}!`));
+
+  if (!engineSpinning){
+    return res.send("There is nothing playing");
+  }
+  console.log("Stopping Engine");
+  waitRes = res;
+  reset();
+});
+
+app.listen(remote_port, () => console.log(`Vbox listening on port ${remote_port}!`));
