@@ -1,6 +1,7 @@
-const express = require('express');
-const app = express();
-var cors = require('cors');
+var app = require('express')();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
+
 var display = require("./display.js");
 var path = require('path');
 var fs = require('fs');
@@ -8,33 +9,72 @@ const { Worker } = require('worker_threads');
 
 var tor_engine = new Worker("./tor_engine.js");
 
-var waitRes;
-
 tor_engine.on("message", function(msg){
   //console.log("Parent: ");
   //console.log(msg);
   if (msg.action == "start"){
     if (msg.success){
       engineSpinning = true;
-      waitRes.send("Torrent loaded and ready to play");
     }else{
       engineSpinning = false;
-      waitRes.send("Invalid Torrent");
       }
   }else if (msg.action =="stop"){
     engineSpinning = false;
     console.log("Engine Reset")
-    waitRes.send("Reset Torrent");
   }
 });
 
 var tempDir = "./torrents";
 var engineSpinning = false;
 
-var remote_port = 3000;
+var remote_port = 2000;
 var tor_port = 8888;
 
 display.init();
+
+
+app.get('/', function (req, res) {
+  return res.sendFile('public/index.html');
+});
+
+
+io.on('connection', function(socket) {
+   console.log('A user connected');
+
+   socket.on('loadMagnet', function (magnet) {
+     reset();
+     tor_engine.postMessage({action:"start", data: {magnet:magnet, port: tor_port}});
+   });
+
+   socket.on('startPlayer', function (data) {
+     if (!engineSpinning){
+       return;
+     }
+
+     display.play(tor_port);
+   });
+
+   socket.on('stopPlayer', function (data) {
+     if (!engineSpinning){
+       return;
+     }
+     console.log("Stopping Engine");
+     reset();
+   });
+
+   socket.on('playerPause', function (data) {
+     if (!engineSpinning){
+       return;
+     }
+
+     display.pausePlayer();
+   });
+
+
+   socket.on('disconnect', function () {
+      console.log('A user disconnected');
+   });
+});
 
 function reset(){
   console.log("Resetting Player");
@@ -46,44 +86,6 @@ function reset(){
   }
 }
 
-
-app.use(cors());
-app.use(express.static('public'));
-
-app.get('/', function (req, res) {
-  return res.sendFile('index.html');
+http.listen(remote_port, function() {
+   console.log(`Vbox node listening on port ${remote_port}`);
 });
-
-app.get('/loadMagnet', async function (req, res) {
-  var magnet = req.query.url;
-  reset();
-
-
-  tor_engine.postMessage({action:"start", data: {magnet:magnet, port: tor_port}});
-
-  waitRes = res;
-});
-
-app.get('/play', function (req, res) {
-
-  if (!engineSpinning){
-    return res.send("There is nothing to play");
-  }
-
-  display.play(tor_port);
-
-  res.send("Started playing");
-});
-
-app.get('/stop', function (req, res) {
-
-
-  if (!engineSpinning){
-    return res.send("There is nothing playing");
-  }
-  console.log("Stopping Engine");
-  waitRes = res;
-  reset();
-});
-
-app.listen(remote_port, () => console.log(`Vbox listening on port ${remote_port}!`));

@@ -9,6 +9,7 @@
     <input type="button" id="bload" value="Load Torrent">
     <input type="button" id="bplay" value="Play Torrent">
     <input type="button" id="bstop" value="Stop Torrent">
+    <input type="button" id="bpause" value="Pause Playback">
   </form>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -22,12 +23,17 @@
     });
 
     $("#bplay").click(function(){
-      var url = "http://" + baseUrl + ":3000" + "/play";
+      var url = "http://" + baseUrl + ":3000" + "/startPlayer";
       getReq(url);
     });
 
     $("#bstop").click(function(){
-      var url = "http://" + baseUrl + ":3000" + "/stop";
+      var url = "http://" + baseUrl + ":3000" + "/stopPlayer";
+      getReq(url);
+    });
+
+    $("#bpause").click(function(){
+      var url = "http://" + baseUrl + ":3000" + "/playerPause";
       getReq(url);
     });
 

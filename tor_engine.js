@@ -43,8 +43,8 @@ function start(magnet, port) {
       console.log("Metadata fetched");
     });
 
-    engine.on('download', function(index){
-      console.log("Downloaded " + engine.swarm.downloaded + " - " + index);
+    engine.on('idle', function(){
+      console.log("Torrent Fully Downloaded");
     });
 
     engine.on('ready', function(){
@@ -54,7 +54,9 @@ function start(magnet, port) {
         console.log("Engine Started");
 
         engine.server = createServer(engine, {});
-        engine.server.listen(port);
+        engine.server.listen(port, function(){
+          console.log("Started serving Stream");
+        });
 
         return parentPort.postMessage({action:"start",success:true});
       });
@@ -65,11 +67,14 @@ function start(magnet, port) {
 
 function stop () {
   console.log("closing server");
-  engine.server.close();
-  console.log("destroying engine");
-  engine.destroy(function(){});
-  engine = null;
-  return true;
+  console.log(engine);
+  if (engine){
+    engine.server.close();
+    console.log("destroying engine");
+    engine.destroy(function(){});
+    engine = null;
+  }
+  return parentPort.postMessage({action:"start",success:true});
 };
 
 function selectFile(files){
