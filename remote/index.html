@@ -1,51 +1,156 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+  <title>Vbox</title>
+
+  <!-- Chrome for Android theme color -->
+  <meta name="theme-color" content="#F97022">
+
+  <!-- Web Application Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Tile color for Win8 -->
+  <meta name="msapplication-TileColor" content="#F97022">
+
+  <!-- Add to homescreen for Chrome on Android -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Vbox">
+  <link rel="icon" sizes="192x192" href="images/icons/chrome-touch-icon-192x192.png">
+
+  <!-- Add to homescreen for Safari on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Vbox">
+  <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png">
+
+  <!-- Apple Startup Screen -->
+  <link href="images/icons/apple_splash_2048.png" sizes="2048x2732" rel="apple-touch-startup-image" />
+  <link href="images/icons/apple_splash_1668.png" sizes="1668x2224" rel="apple-touch-startup-image" />
+  <link href="images/icons/apple_splash_1536.png" sizes="1536x2048" rel="apple-touch-startup-image" />
+  <link href="images/icons/apple_splash_1125.png" sizes="1125x2436" rel="apple-touch-startup-image" />
+  <link href="images/icons/apple_splash_1242.png" sizes="1242x2208" rel="apple-touch-startup-image" />
+  <link href="images/icons/apple_splash_750.png" sizes="750x1334" rel="apple-touch-startup-image" />
+  <link href="images/icons/apple_splash_640.png" sizes="640x1136" rel="apple-touch-startup-image" />
+
+  <!-- Tile icon for Win8 (144x144) -->
+  <meta name="msapplication-TileImage" content="images/icons/ms-touch-icon-144x144-precomposed.png">
+
+  <link rel="stylesheet" href="https://minicss.org/flavorFiles/mini-dark.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
 
 <body>
-  <p id="output"></p>
-  <form>
-    <label for="magnet">Magnet Link:</label><br>
-    <input type="text" id="url" name="magnet"><br>
-    <input type="button" id="bload" value="Load Torrent">
-    <input type="button" id="bplay" value="Play Torrent">
-    <input type="button" id="bstop" value="Stop Torrent">
-    <input type="button" id="bpause" value="Pause Playback">
-  </form>
+  <nav>
+    <h1>Vbox Remote</h1>
+  </nav>
+  <main>
+  <div id="scan">
+    <h2>Scan your device QR-code</h2>
+    <div id="loadingMessage">🎥 Unable to access video stream (please make sure you have the camera enabled)</div>
+    <canvas id="canvas" hidden></canvas>
+  </div>
+  <div id="remote" style="display:none" class="container">
+    <div id="chose">
+      <div class="row">
+        <label for="magnet">Magnet Link:</label><br>
+        <input type="text" id="magnet" name="magnet">
+      </div>
+      <div class="row">
+        <button onclick="loadMagnet()" class="primary">Start Engine</button>
+      </div>
+    </div>
+    <div id="startPlay" style="display:none">
+      <div class="row">
+        <button onclick="startPlayer()" class="primary">Start Playback</button>
+      </div>
+    </div>
+    <div id="controls" style="display:none">
+      <div class="row">
+        <button onclick="stopPlayer()" class="secondary">Stop Engine</button>
+      </div>
+      <div class="row">
+        <h3 id="title"></h3>
+      </div>
+      <div class="row">
+        <div class="slidecontainer">
+          <input type="range" min="0" max="100" value="0" class="slider sliderVid" id="vidrange">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-4">
+          <h4><small>00:00:00</small></h4>
+        </div>
+        <div style="text-align: center;" class="col-sm-4">
+          <h4><small id="vidPos">00:00:00</small></h4>
+        </div>
+        <div style="text-align: right;" class="col-sm-4">
+          <h4><small id="vidMax">00:00:00</small></h4>
+        </div>
+      </div>
+      <div class="row">
+        <div style="text-align: left;"class="col-sm-4">
+          <input type="button" onclick="seekRel(30, '-');" value="-30s" />
+        </div>
+        <div style="text-align: center;" class="col-sm-4">
+          <input onclick="playerPause()" id="playB" type="button" value="Pause/Resume" />
+        </div>
+        <div style="text-align: right;" class="col-sm-4">
+          <input type="button" onclick="seekRel(30, '+');" value="+30s" />
+        </div>
+      </div>
+      <div style="text-align: center;" class="row">
+        <h3><small id="volPos">Volume: 100%</small></h3>
+      </div>
+      <div class="row">
+        <div class="slidecontainer">
+          <input type="range" min="0" max="150" value="100" class="slider sliderVol" id="volrange">
+        </div>
+      </div>
+    </div>
+      <div id="info" style="display:none">
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      </br>
+      </br>
+      </br>
+
+      <div style="text-align: center;" class="row">
+        <h3>Engine Info</h3>
+      </div>
+      <div class="row">
+        <form style="width:100%">
+          <div class="input-group vertical">
+            <label for="downloaded">Downloaded:</label>
+            <input type="text" id="downloaded" placeholder="0mb" readonly/>
+            <label for="downloadspd">Download speed:</label>
+            <input type="text" id="downloadspd" placeholder="0mbps" readonly/>
+            <label for="uploaded">Uploaded:</label>
+            <input type="text" id="uploaded" placeholder="0mb" readonly/>
+            <label for="uploadspd">Upload speed:</label>
+            <input type="text" id="uploadspd" placeholder="0mbps" readonly/>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  </main>
+
   <script>
-
-    var baseUrl = "192.168.137.14"
-
-    $("#bload").click(function(){
-      var url = "http://" + baseUrl + ":3000" + "/loadMagnet?url=" + encodeURIComponent($("#url")[0].value);
-      getReq(url);
-    });
-
-    $("#bplay").click(function(){
-      var url = "http://" + baseUrl + ":3000" + "/startPlayer";
-      getReq(url);
-    });
-
-    $("#bstop").click(function(){
-      var url = "http://" + baseUrl + ":3000" + "/stopPlayer";
-      getReq(url);
-    });
-
-    $("#bpause").click(function(){
-      var url = "http://" + baseUrl + ":3000" + "/playerPause";
-      getReq(url);
-    });
-
-    function getReq(url){
-      $.get(url, function(data, status){
-        $("#output")[0].innerHTML = data;
-      });
-    }
-
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker
+        .register("/serviceWorker.js")
+        .then(res => console.log("service worker registered"))
+        .catch(err => console.log("service worker not registered", err))
+    })
+  }
   </script>
-
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+  <script src="jsQR.js"></script>
+  <script src="main.js"></script>
 </body>
 
 </html>

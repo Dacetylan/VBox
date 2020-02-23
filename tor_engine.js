@@ -1,5 +1,5 @@
 const { parentPort } = require('worker_threads');
-
+var child = require('child_process');
 var torrentStream = require('torrent-stream');
 var readTorrent = require('read-torrent');
 var http = require('http');
@@ -31,7 +31,7 @@ parentPort.on("message",function(msg){
   }
 });
 
-function start(magnet, port) {
+function start(magnet, port, socket) {
   readTorrent(magnet, function(err, torrent) {
     if (err){
       return parentPort.postMessage({action:"start",success:false});
@@ -41,6 +41,10 @@ function start(magnet, port) {
 
     engine.on('torrent', function(){
       console.log("Metadata fetched");
+    });
+
+    engine.on('download', function(){
+      parentPort.postMessage({action:"torrentData",data:{downloaded:engine.swarm.downloaded,uploaded:engine.swarm.uploaded,downloadSpeed:engine.swarm.downloadSpeed(),uploadSpeed:engine.swarm.uploadSpeed()}});
     });
 
     engine.on('idle', function(){
@@ -58,7 +62,7 @@ function start(magnet, port) {
           console.log("Started serving Stream");
         });
 
-        return parentPort.postMessage({action:"start",success:true});
+        return parentPort.postMessage({action:"start",success:true,data:{vidLen:chosenFile.length,name:chosenFile.name.replace(/\.[^/.]+$/, "")},});
       });
 
     });
@@ -67,14 +71,14 @@ function start(magnet, port) {
 
 function stop () {
   console.log("closing server");
-  console.log(engine);
   if (engine){
     engine.server.close();
     console.log("destroying engine");
     engine.destroy(function(){});
     engine = null;
   }
-  return parentPort.postMessage({action:"start",success:true});
+  rmdir("torrent-stream");
+  return parentPort.postMessage({action:"stop",success:true});
 };
 
 function selectFile(files){
@@ -168,3 +172,13 @@ var createServer = function (e, opts) {
 
   return server
 }
+
+var rmdir = function(directories) {
+    if(typeof directories === 'string') {
+        directories = [directories];
+    }
+    var args = directories;
+    args.unshift('-rf');
+    child.execFile('rm', args, {env:process.env}, function(err, stdout, stderr) {
+    });
+};
