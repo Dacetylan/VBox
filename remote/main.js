@@ -103,6 +103,7 @@ var vidData;
 
 function loadMagnet(){
   socket.emit('loadMagnet', get("magnet").value);
+  get("chose").style.display = "none";
 }
 
 socket.on('engineReady', (data) => {
@@ -166,12 +167,12 @@ socket.on('torrentData', (data) => {
 
 function stopPlayer(){
   clearInterval(fetchInt);
-  playing = false;
   socket.emit('stopPlayer', "");
   get("startPlay").style.display = "none";
   get("controls").style.display = "none";
   get("info").style.display = "none";
   get("chose").style.display = "initial";
+  setTimeout(function(){playing = false;},1000);
 }
 
 function playerPause(){
