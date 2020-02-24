@@ -1,5 +1,7 @@
 
 var socket = io("http://" + window.location.hostname + ":2000");
+var yts_api = "https://yts.mx/api/v2/";
+
 
 function get(id){
   return document.getElementById(id);
@@ -126,4 +128,121 @@ vidrange.onchange = function() {
 volrange.onchange = function() {
   updatevolrng = true;
   socket.emit('playerVol', this.value/100 * 256);
+}
+
+function loadTor(el){
+  var link = el.getAttribute("torlink");
+  socket.emit('loadMagnet', link);
+  get("chose").style.display = "none";
+}
+
+
+function search(){
+get("results").innerHTML = "";
+var name = get("movie").value;
+var request = yts_api + "list_movies.json" + "?query_term=" + encodeURI(name);
+
+$.get(request, function(result, status){
+
+  var data = result.data;
+  for (var i=0; i<data.movies.length; i++){
+    var movdata = data.movies[i];
+    console.log(movdata);
+
+    var row = document.createElement( 'div' );
+    row.setAttribute("class", "row");
+
+    var imgCol = document.createElement( 'div' );
+    imgCol.setAttribute("class","col-sm-12 cold-md-4");
+    var img = document.createElement("img");
+    img.setAttribute("src", movdata.medium_cover_image);
+    imgCol.appendChild(img);
+    row.appendChild(imgCol);
+
+    var descCol = document.createElement( 'div' );
+    descCol.setAttribute("class","col-sm-12 cold-md-8");
+
+    var titleRow = document.createElement( 'div' );
+    titleRow.setAttribute("class","row");
+
+    var title = document.createElement( 'h3' );
+    title.innerHTML = movdata.title_long;
+    titleRow.appendChild(title);
+
+    var descRow = document.createElement( 'div' );
+    descRow.setAttribute("class","row");
+
+    var desc = document.createElement( 'h4' );
+    desc.innerHTML = movdata.summary;
+    descRow.appendChild(desc);
+
+    descCol.appendChild(titleRow);
+    descCol.appendChild(descRow);
+
+    var torCol = document.createElement( 'div' );
+    torCol.setAttribute("class","col-sm-12");
+
+    for (var j=0; j < movdata.torrents.length; j++){
+      var tordat = movdata.torrents[j];
+      var torRow = document.createElement( 'div' );
+      torRow.setAttribute("class","row");
+
+      var qCol = document.createElement( 'div' );
+      qCol.setAttribute("class","col-sm-3");
+      qCol.style.textAlign = "left";
+
+      var q = document.createElement( 'input' );
+      q.setAttribute("type","button");
+      q.setAttribute("value", tordat.quality + " " + tordat.type);
+      q.setAttribute("torlink", tordat.url);
+      q.setAttribute("onclick", "loadTor(this)");
+      q.style.width = "100%";
+      q.style.whiteSpace = "normal";
+      q.style.wordWrap = "break-word";
+      qCol.appendChild(q);
+
+      torRow.appendChild(qCol);
+
+      var seedsCol = document.createElement( 'div' );
+      seedsCol.setAttribute("class","col-sm-3");
+      seedsCol.style.textAlign = "center";
+
+      var seeds = document.createElement( 'h5' );
+      seeds.innerHTML = "Seeders: " + tordat.seeds;
+      seedsCol.appendChild(seeds);
+
+      torRow.appendChild(seedsCol);
+
+      var peersCol = document.createElement( 'div' );
+      peersCol.setAttribute("class","col-sm-3");
+      peersCol.style.textAlign = "center";
+
+      var peers = document.createElement( 'h5' );
+      peers.innerHTML = "Peers: " + tordat.peers;
+      peersCol.appendChild(peers);
+
+      torRow.appendChild(peersCol);
+
+      var sizeCol = document.createElement( 'div' );
+      sizeCol.setAttribute("class","col-sm-3");
+      sizeCol.style.textAlign = "center";
+
+      var size = document.createElement( 'h5' );
+      size.innerHTML = tordat.size;
+      sizeCol.appendChild(size);
+
+      torRow.appendChild(sizeCol);
+
+
+      torCol.appendChild(torRow);
+    }
+
+    row.appendChild(descCol);
+    row.appendChild(torCol);
+
+
+    get("results").appendChild( row );
+  }
+
+});
 }

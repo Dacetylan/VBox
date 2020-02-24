@@ -7,38 +7,6 @@
   <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
   <title>Vbox</title>
 
-  <!-- Chrome for Android theme color -->
-  <meta name="theme-color" content="#F97022">
-
-  <!-- Web Application Manifest -->
-  <link rel="manifest" href="manifest.json">
-
-  <!-- Tile color for Win8 -->
-  <meta name="msapplication-TileColor" content="#F97022">
-
-  <!-- Add to homescreen for Chrome on Android -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="application-name" content="Vbox">
-  <link rel="icon" sizes="192x192" href="images/icons/chrome-touch-icon-192x192.png">
-
-  <!-- Add to homescreen for Safari on iOS -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="Vbox">
-  <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png">
-
-  <!-- Apple Startup Screen -->
-  <link href="images/icons/apple_splash_2048.png" sizes="2048x2732" rel="apple-touch-startup-image" />
-  <link href="images/icons/apple_splash_1668.png" sizes="1668x2224" rel="apple-touch-startup-image" />
-  <link href="images/icons/apple_splash_1536.png" sizes="1536x2048" rel="apple-touch-startup-image" />
-  <link href="images/icons/apple_splash_1125.png" sizes="1125x2436" rel="apple-touch-startup-image" />
-  <link href="images/icons/apple_splash_1242.png" sizes="1242x2208" rel="apple-touch-startup-image" />
-  <link href="images/icons/apple_splash_750.png" sizes="750x1334" rel="apple-touch-startup-image" />
-  <link href="images/icons/apple_splash_640.png" sizes="640x1136" rel="apple-touch-startup-image" />
-
-  <!-- Tile icon for Win8 (144x144) -->
-  <meta name="msapplication-TileImage" content="images/icons/ms-touch-icon-144x144-precomposed.png">
-
   <link rel="stylesheet" href="https://minicss.org/flavorFiles/mini-dark.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -51,11 +19,14 @@
   <div id="remote" class="container">
     <div id="chose">
       <div class="row">
-        <label for="magnet">Magnet Link:</label><br>
-        <input type="text" id="magnet" name="magnet">
+        <label for="movie">Movie Name:</label><br>
+        <input type="text" id="movie" name="magnet">
       </div>
       <div class="row">
-        <button onclick="loadMagnet()" class="primary">Start Engine</button>
+        <button onclick="search()" class="primary">Search Movie</button>
+      </div>
+      <div id="results" class="row">
+
       </div>
     </div>
     <div id="startPlay" style="display:none">
@@ -102,7 +73,7 @@
       </div>
       <div class="row">
         <div class="slidecontainer">
-          <input type="range" min="0" max="150" value="100" class="slider sliderVol" id="volrange">
+          <input type="range" min="0" max="200" value="100" class="slider sliderVol" id="volrange">
         </div>
       </div>
     </div>
@@ -133,6 +104,7 @@
   </div>
   </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <script src="main.js"></script>
 </body>
 
