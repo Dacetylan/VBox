@@ -44,7 +44,9 @@ class vlc {
     ])
 
     getVlcСommand((err, vlcPath) => {
-      if (err) this._throwError(err)
+      if (err) {
+        vlcPath = "/usr/bin/vlc";
+      }
 
       this.process = spawn(vlcPath, args)
 
