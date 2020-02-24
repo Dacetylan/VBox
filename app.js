@@ -1,11 +1,14 @@
 var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var https = require('https');
 var os = require('os');
-
 var display = require("./display.js");
 var path = require('path');
 var fs = require('fs');
+const secureServer = https.createServer({
+key: fs.readFileSync("./server.key"),
+cert: fs.readFileSync("./server.cert")
+}, app);
+var io = require('socket.io')(secureServer);
 const { Worker } = require('worker_threads');
 
 var tor_engine = new Worker("./tor_engine.js");
@@ -190,6 +193,6 @@ function stopEngine(){
   }
 }
 
-http.listen(remote_port, function() {
+secureServer.listen(remote_port, function() {
    console.log(`Vbox node listening on port ${remote_port}`);
 });

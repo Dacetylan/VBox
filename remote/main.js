@@ -1,7 +1,8 @@
 var ip = "";
 
-var socket = io("http://" + ip + ":2000", {
-  autoConnect: false
+var socket = io("https://" + ip + ":2000", {
+  autoConnect: false,
+  rejectUnauthorized:false,
 });
 
 function get(id){
@@ -53,7 +54,7 @@ function tick() {
 function validateCode(code){
   console.log(code);
   cancelAnimationFrame(animreq);
-  socket.io.uri = "http://" + code + ":2000";
+  socket.io.uri = "https://" + code + ":2000";
   socket.open();
 
 }
