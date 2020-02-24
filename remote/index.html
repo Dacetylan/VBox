@@ -53,89 +53,6 @@
     <div id="loadingMessage">🎥 Unable to access video stream (please make sure you have the camera enabled)</div>
     <canvas id="canvas" hidden></canvas>
   </div>
-  <div id="remote" style="display:none" class="container">
-    <div id="chose">
-      <div class="row">
-        <label for="magnet">Magnet Link:</label><br>
-        <input type="text" id="magnet" name="magnet">
-      </div>
-      <div class="row">
-        <button onclick="loadMagnet()" class="primary">Start Engine</button>
-      </div>
-    </div>
-    <div id="startPlay" style="display:none">
-      <div class="row">
-        <button onclick="startPlayer()" class="primary">Start Playback</button>
-      </div>
-    </div>
-    <div id="controls" style="display:none">
-      <div class="row">
-        <button onclick="stopPlayer()" class="secondary">Stop Engine</button>
-      </div>
-      <div class="row">
-        <h3 id="title"></h3>
-      </div>
-      <div class="row">
-        <div class="slidecontainer">
-          <input type="range" min="0" max="100" value="0" class="slider sliderVid" id="vidrange">
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-sm-4">
-          <h4><small>00:00:00</small></h4>
-        </div>
-        <div style="text-align: center;" class="col-sm-4">
-          <h4><small id="vidPos">00:00:00</small></h4>
-        </div>
-        <div style="text-align: right;" class="col-sm-4">
-          <h4><small id="vidMax">00:00:00</small></h4>
-        </div>
-      </div>
-      <div class="row">
-        <div style="text-align: left;"class="col-sm-4">
-          <input type="button" onclick="seekRel(30, '-');" value="-30s" />
-        </div>
-        <div style="text-align: center;" class="col-sm-4">
-          <input onclick="playerPause()" id="playB" type="button" value="Pause/Resume" />
-        </div>
-        <div style="text-align: right;" class="col-sm-4">
-          <input type="button" onclick="seekRel(30, '+');" value="+30s" />
-        </div>
-      </div>
-      <div style="text-align: center;" class="row">
-        <h3><small id="volPos">Volume: 100%</small></h3>
-      </div>
-      <div class="row">
-        <div class="slidecontainer">
-          <input type="range" min="0" max="150" value="100" class="slider sliderVol" id="volrange">
-        </div>
-      </div>
-    </div>
-      <div id="info" style="display:none">
-
-      </br>
-      </br>
-      </br>
-
-      <div style="text-align: center;" class="row">
-        <h3>Engine Info</h3>
-      </div>
-      <div class="row">
-        <form style="width:100%">
-          <div class="input-group vertical">
-            <label for="downloaded">Downloaded:</label>
-            <input type="text" id="downloaded" placeholder="0mb" readonly/>
-            <label for="downloadspd">Download speed:</label>
-            <input type="text" id="downloadspd" placeholder="0mbps" readonly/>
-            <label for="uploaded">Uploaded:</label>
-            <input type="text" id="uploaded" placeholder="0mb" readonly/>
-            <label for="uploadspd">Upload speed:</label>
-            <input type="text" id="uploadspd" placeholder="0mbps" readonly/>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
   </main>
 
   <script>
@@ -148,9 +65,58 @@
     })
   }
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
   <script src="jsQR.js"></script>
-  <script src="main.js"></script>
+  <script>
+  var ip = "";
+
+  function get(id){
+    return document.getElementById(id);
+  }
+
+  var animreq;
+  var video = document.createElement("video");
+  var canvasElement = get("canvas");
+  var canvas = canvasElement.getContext("2d");
+  var loadingMessage = get("loadingMessage");
+
+  // Use facingMode: environment to attemt to get the front camera on phones
+  function startQR(){
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
+      strm = stream;
+      video.srcObject = stream;
+      video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+      video.play();
+      animreq = requestAnimationFrame(tick);
+    });
+  }
+  startQR();
+
+  function tick() {
+    loadingMessage.innerText = "⌛ Loading video..."
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      loadingMessage.hidden = true;
+      canvasElement.hidden = false;;
+
+      canvasElement.height = video.videoHeight;
+      canvasElement.width = video.videoWidth;
+      canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+      var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+      var code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
+      if (code) {
+        validateCode(code.data);
+      }
+    }
+    animreq = requestAnimationFrame(tick);
+  }
+
+  function validateCode(code){
+    console.log(code);
+    cancelAnimationFrame(animreq);
+    window.location.href = "http://" + code + ":2500";
+  }
+  </script>
 </body>
 
 </html>

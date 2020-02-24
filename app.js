@@ -1,14 +1,12 @@
 var app = require('express')();
-var https = require('https');
+var fs = require('fs');
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
 var os = require('os');
+
 var display = require("./display.js");
 var path = require('path');
-var fs = require('fs');
-const secureServer = https.createServer({
-key: fs.readFileSync("./server.key"),
-cert: fs.readFileSync("./server.cert")
-}, app);
-var io = require('socket.io')(secureServer);
+
 const { Worker } = require('worker_threads');
 
 var tor_engine = new Worker("./tor_engine.js");
@@ -41,6 +39,7 @@ var engineData;
 
 var remote_port = 2000;
 var tor_port = 8888;
+var web_port = 2500;
 var ip;
 
 display.init();
@@ -94,8 +93,15 @@ var networkCheck = setInterval(function(){
 }, connectionCheckInterval);
 
 app.get('/', function (req, res) {
-  return res.sendFile('public/index.html');
+  return res.sendFile(__dirname + '/remote/remote.html');
 });
+app.get('/style.css', function (req, res) {
+  return res.sendFile(__dirname + '/remote/style.css');
+});
+app.get('/main.js', function (req, res) {
+  return res.sendFile(__dirname + '/remote/main.js');
+});
+
 
 
 io.on('connection', function(socket) {
@@ -193,6 +199,10 @@ function stopEngine(){
   }
 }
 
-secureServer.listen(remote_port, function() {
+http.listen(remote_port, function() {
    console.log(`Vbox node listening on port ${remote_port}`);
+});
+
+app.listen(web_port, function() {
+   console.log(`Express running on ${web_port}`);
 });

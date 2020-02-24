@@ -1,63 +1,12 @@
-var ip = "";
 
-var socket = io("https://" + ip + ":2000", {
-  autoConnect: false,
-  rejectUnauthorized:false,
-});
+var socket = io("http://" + window.location.hostname + ":2000");
 
 function get(id){
   return document.getElementById(id);
 }
 
-var animreq;
-var video = document.createElement("video");
-var canvasElement = get("canvas");
-var canvas = canvasElement.getContext("2d");
-var loadingMessage = get("loadingMessage");
-var strm;
-
 var updatevidrng = true;
 var updatevolrng = true;
-
-// Use facingMode: environment to attemt to get the front camera on phones
-function startQR(){
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
-    strm = stream;
-    video.srcObject = stream;
-    video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
-    video.play();
-    animreq = requestAnimationFrame(tick);
-  });
-}
-startQR();
-
-function tick() {
-  loadingMessage.innerText = "⌛ Loading video..."
-  if (video.readyState === video.HAVE_ENOUGH_DATA) {
-    loadingMessage.hidden = true;
-    canvasElement.hidden = false;;
-
-    canvasElement.height = video.videoHeight;
-    canvasElement.width = video.videoWidth;
-    canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-    var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-    var code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: "dontInvert",
-    });
-    if (code) {
-      validateCode(code.data);
-    }
-  }
-  animreq = requestAnimationFrame(tick);
-}
-
-function validateCode(code){
-  console.log(code);
-  cancelAnimationFrame(animreq);
-  socket.io.uri = "https://" + code + ":2000";
-  socket.open();
-
-}
 
 function formatTime(seconds){
   return new Date(seconds * 1000).toISOString().substr(11, 8);
@@ -81,23 +30,8 @@ volrange.oninput = function() {
   updatevolrng = false;
 }
 
-socket.on('connect_timeout', (timeout) => {
-  animreq = requestAnimationFrame(tick);
-});
-socket.on('connect', () => {
-  strm.getTracks().forEach(track => track.stop());
-  get("scan").style.display = "none";
-  get("remote").style.display = "initial";
-});
 socket.on('disconnect', (reason) => {
-  get("scan").style.display = "initial";
-  get("remote").style.display = "none";
-  get("startPlay").style.display = "none";
-  get("controls").style.display = "none";
-  get("info").style.display = "none";
-  get("chose").style.display = "none";
-  startQR();
-  animreq = requestAnimationFrame(tick);
+  window.history.back();
 });
 
 var vidData;
